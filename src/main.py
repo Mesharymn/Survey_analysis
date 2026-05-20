@@ -26,19 +26,50 @@ FONT_DIR.mkdir(exist_ok=True)
 plt.rcParams['font.family'] = 'DejaVu Sans'
 
 POSITIVE_WORDS = {
+    # English
     'good', 'great', 'excellent', 'amazing', 'fast', 'easy', 'helpful', 'clear',
     'satisfied', 'happy', 'love', 'best', 'useful', 'professional', 'smooth',
-    'جيد', 'جيدة', 'ممتاز', 'ممتازة', 'رائع', 'رائعة', 'سريع', 'سريعة',
-    'سهل', 'سهلة', 'مفيد', 'مفيدة', 'واضح', 'واضحة', 'راضي', 'راضية',
-    'سعيد', 'سعيدة', 'احترافي', 'احترافية', 'جميل', 'جميلة', 'أفضل'
+    'clean', 'friendly', 'organized', 'recommended', 'recommend', 'perfect',
+    'quality', 'quick', 'polite', 'comfortable', 'responsive',
+
+    # Arabic MSA and common Saudi/Gulf review words
+    'جيد', 'جيدة', 'جيدين', 'ممتاز', 'ممتازة', 'ممتازين', 'رائع', 'رائعة',
+    'اروع', 'أروع', 'جميل', 'جميلة', 'جمييل', 'حلو', 'حلوة', 'حلوين',
+    'سريع', 'سريعة', 'سريعين', 'سرعة', 'سهل', 'سهلة', 'مفيد', 'مفيدة',
+    'واضح', 'واضحة', 'راضي', 'راضية', 'مرتاح', 'مرتاحة', 'سعيد', 'سعيدة',
+    'احترافي', 'احترافية', 'محترف', 'محترفة', 'راقي', 'راقية', 'نظيف',
+    'نظيفة', 'نظافه', 'نظافة', 'مرتب', 'مرتبة', 'منظم', 'منظمة', 'مريح',
+    'مريحة', 'لطيف', 'لطيفة', 'متعاون', 'متعاونة', 'متعاونين', 'بشوش',
+    'بشوشين', 'خلوق', 'خلوقين', 'خدوم', 'خدومين', 'فاهم', 'فاهمين',
+    'متمكن', 'متمكنين', 'مبادر', 'مبادرة', 'متميز', 'متميزة', 'ابداع',
+    'إبداع', 'مبدع', 'مبدعة', 'ممتن', 'ممتنة', 'شكرا', 'شكراً', 'يعطيكم',
+    'العافية', 'بيض', 'الله', 'وجيهكم', 'انصح', 'أنصح', 'انصحكم', 'أوصي',
+    'اوفر', 'أوفر', 'مناسب', 'مناسبة', 'مقبول', 'مقبولة', 'أفضل', 'افضل',
+    'تمام', 'كويس', 'كويسة', 'ممتازين', 'رهيب', 'رهيبة', 'بطل', 'بطلة',
+    'يفوز', 'تجربة', 'ممتازه', 'رائعه', 'جميله', 'سريعه', 'سهله', 'واضحه'
 }
 
 NEGATIVE_WORDS = {
+    # English
     'bad', 'poor', 'slow', 'difficult', 'hard', 'confusing', 'expensive', 'late',
     'problem', 'issue', 'weak', 'angry', 'unhappy', 'worst', 'unclear',
-    'سيء', 'سيئة', 'ضعيف', 'ضعيفة', 'بطيء', 'بطيئة', 'صعب', 'صعبة',
-    'مشكلة', 'مشاكل', 'غالي', 'غالية', 'متأخر', 'متأخرة', 'غير واضح',
-    'معقد', 'معقدة', 'أسوأ', 'زعلان', 'زعلانة'
+    'dirty', 'rude', 'delay', 'delayed', 'broken', 'unhelpful', 'crowded',
+    'overpriced', 'annoying', 'terrible', 'disappointed', 'disappointing',
+
+    # Arabic MSA and common Saudi/Gulf review words
+    'سيء', 'سيئة', 'سيئين', 'سئ', 'سيئه', 'ضعيف', 'ضعيفة', 'ضعيفه',
+    'بطيء', 'بطيئة', 'بطيئ', 'بطئ', 'بطء', 'صعب', 'صعبة', 'صعبه',
+    'مشكلة', 'مشاكل', 'غالي', 'غالية', 'غاليه', 'مبالغ', 'مبالغة', 'متأخر',
+    'متأخرة', 'تاخير', 'تأخير', 'يتأخر', 'انتظار', 'زحمة', 'ازدحام',
+    'معقد', 'معقدة', 'معقده', 'غير', 'واضح', 'أسوأ', 'اسوء', 'سيئ',
+    'زعلان', 'زعلانة', 'غاضب', 'مستاء', 'مستاءة', 'محبط', 'محبطة',
+    'مخيب', 'مخيبة', 'مزعج', 'مزعجة', 'ازعاج', 'إزعاج', 'متعب', 'متعبة',
+    'وسخ', 'وسخة', 'قذر', 'قذرة', 'غيرنظيف', 'مهمل', 'مهملة', 'اهمال',
+    'إهمال', 'سيئه', 'رديء', 'رديئة', 'رديئه', 'تعامل', 'سيء', 'وقح',
+    'وقحة', 'وقحين', 'غيرمتعاون', 'غيرمتعاونة', 'بارد', 'باردة', 'استغلال',
+    'نصب', 'كذب', 'كذاب', 'خداع', 'خربان', 'معطل', 'عطل', 'فشل', 'فاشل',
+    'فاشلة', 'مايستاهل', 'مايستحق', 'ندمت', 'للأسف', 'للاسف', 'خسارة',
+    'اسوء', 'تعبان', 'تعبانه', 'موحلو', 'موكويس', 'مقبول؟'
 }
 
 STOP_WORDS = {
@@ -47,6 +78,20 @@ STOP_WORDS = {
     'في', 'من', 'على', 'الى', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'كانت',
     'كان', 'انه', 'أن', 'إن', 'او', 'أو', 'لكن', 'جدا', 'كل', 'ما', 'لا', 'نعم'
 }
+
+ARABIC_PHRASES_POSITIVE = [
+    'خدمة ممتازة', 'خدمه ممتازه', 'تعامل راقي', 'تعامل ممتاز', 'تجربة ممتازة',
+    'تجربه ممتازه', 'انصح فيه', 'أنصح فيه', 'انصح بالتعامل', 'شكرا لكم',
+    'يعطيكم العافية', 'سرعة في الخدمة', 'الموظفين متعاونين', 'موقع ممتاز',
+    'اسعار مناسبة', 'أسعار مناسبة'
+]
+
+ARABIC_PHRASES_NEGATIVE = [
+    'خدمة سيئة', 'خدمه سيئه', 'تعامل سيء', 'تجربة سيئة', 'تجربه سيئه',
+    'لا انصح', 'لا أنصح', 'ما انصح', 'ما أنصح', 'غير واضح', 'انتظار طويل',
+    'زحمة كثيرة', 'تأخير كثير', 'تاخير كثير', 'سعر مبالغ', 'اسعار غالية',
+    'أسعار غالية', 'الموظف غير متعاون', 'خدمة بطيئة', 'خدمه بطيئه'
+]
 
 
 def format_arabic_text(text):
@@ -76,15 +121,31 @@ def load_data(file_path):
     raise ValueError('Unsupported file type. Please use CSV, XLSX, or XLS files.')
 
 
+def normalize_arabic(text):
+    text = str(text).lower()
+    replacements = {
+        'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ة': 'ه', 'ى': 'ي', 'ؤ': 'و', 'ئ': 'ي'
+    }
+    for original, replacement in replacements.items():
+        text = text.replace(original, replacement)
+    return text
+
+
 def tokenize_text(text):
-    words = re.findall(r'[\w\u0600-\u06FF]+', str(text).lower())
+    normalized_text = normalize_arabic(text)
+    words = re.findall(r'[\w\u0600-\u06FF]+', normalized_text)
     return [word for word in words if word not in STOP_WORDS and len(word) > 2]
 
 
 def detect_sentiment(text):
-    words = tokenize_text(text)
+    normalized_text = normalize_arabic(text)
+    words = tokenize_text(normalized_text)
+
     positive_score = sum(1 for word in words if word in POSITIVE_WORDS)
     negative_score = sum(1 for word in words if word in NEGATIVE_WORDS)
+
+    positive_score += sum(2 for phrase in ARABIC_PHRASES_POSITIVE if normalize_arabic(phrase) in normalized_text)
+    negative_score += sum(2 for phrase in ARABIC_PHRASES_NEGATIVE if normalize_arabic(phrase) in normalized_text)
 
     if positive_score > negative_score:
         return 'Positive / إيجابي'
