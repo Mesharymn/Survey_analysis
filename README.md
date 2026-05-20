@@ -162,8 +162,6 @@ The font file is not included in the repository.
 
 ## Current limitations
 
-- Sentiment analysis is dictionary-based, not a machine learning model
-- Arabic sentiment is basic and should be improved with more vocabulary
 - PDF styling is intentionally simple
 - Charts are generated only for columns with a small number of unique values
 - Google Places API may not return every review depending on API restrictions and quotas
