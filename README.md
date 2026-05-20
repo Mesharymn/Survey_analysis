@@ -169,16 +169,6 @@ The font file is not included in the repository.
 - Google Places API may not return every review depending on API restrictions and quotas
 - Live review fetching requires your own Google Maps Platform API key
 
-## Ideas for future improvement
-
-- Streamlit dashboard
-- Interactive map report
-- Better Arabic sentiment dictionary
-- Topic clustering for comments
-- Cleaner PDF design
-- Automatic Place ID lookup
-- Unit tests
-
 ## Tech stack
 
 - Python
