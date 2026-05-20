@@ -14,6 +14,7 @@ The goal is simple: drop in a CSV or Excel file, run one command, and get a basi
 - Adds basic sentiment detection for open-ended comments
 - Extracts repeated keywords from free-text answers
 - Includes a loader for Google Maps review-style exports
+- Supports live Google Places review fetching through the official API
 
 ## Why this project exists
 
@@ -25,10 +26,12 @@ I wanted a lightweight analytics project that is practical enough for real feedb
 Survey_analysis-/
 ├── data/
 │   ├── sample_survey.csv
-│   └── google_maps_reviews_sample.csv
+│   ├── google_maps_reviews_sample.csv
+│   └── google_places_live_reviews.csv
 ├── src/
 │   ├── main.py
-│   └── google_maps_reviews.py
+│   ├── google_maps_reviews.py
+│   └── google_places_live.py
 ├── reports/
 ├── charts/
 ├── requirements.txt
@@ -70,6 +73,44 @@ Run an Excel file:
 
 ```bash
 python src/main.py --file data/my_survey.xlsx
+```
+
+## Fetch live Google Places reviews
+
+This project now includes a helper script that uses the official Google Places API.
+
+Create an API key from Google Maps Platform and enable Places API access.
+
+Set your API key:
+
+Linux/macOS:
+
+```bash
+export GOOGLE_MAPS_API_KEY=your_api_key
+```
+
+Windows PowerShell:
+
+```powershell
+$env:GOOGLE_MAPS_API_KEY="your_api_key"
+```
+
+Fetch reviews:
+
+```bash
+python src/google_places_live.py --place-id YOUR_PLACE_ID --language ar
+```
+
+This generates:
+
+```text
+data/google_places_live_reviews.csv
+```
+
+You can then analyze that file normally:
+
+```bash
+python src/main.py --file data/google_places_live_reviews.csv
 ```
 
 ## Example survey format
@@ -125,7 +166,8 @@ The font file is not included in the repository.
 - Arabic sentiment is basic and should be improved with more vocabulary
 - PDF styling is intentionally simple
 - Charts are generated only for columns with a small number of unique values
-- Google Maps support currently expects exported review/comment data, not live scraping
+- Google Places API may not return every review depending on API restrictions and quotas
+- Live review fetching requires your own Google Maps Platform API key
 
 ## Ideas for future improvement
 
@@ -134,7 +176,7 @@ The font file is not included in the repository.
 - Better Arabic sentiment dictionary
 - Topic clustering for comments
 - Cleaner PDF design
-- Google Places API integration
+- Automatic Place ID lookup
 - Unit tests
 
 ## Tech stack
@@ -147,3 +189,4 @@ The font file is not included in the repository.
 - arabic-reshaper
 - python-bidi
 - folium
+- requests
