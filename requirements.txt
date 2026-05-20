@@ -6,3 +6,4 @@ arabic-reshaper
 python-bidi
 folium
 requests
+openai
