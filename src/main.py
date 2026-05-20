@@ -1,22 +1,44 @@
 import argparse
 from pathlib import Path
 
+import arabic_reshaper
 import matplotlib.pyplot as plt
 import pandas as pd
+from bidi.algorithm import get_display
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 DEFAULT_DATA_FILE = 'data/sample_survey.csv'
 REPORTS_DIR = Path('reports')
 CHARTS_DIR = Path('charts')
+FONT_DIR = Path('fonts')
+ARABIC_FONT_PATH = FONT_DIR / 'DejaVuSans.ttf'
 
 REPORTS_DIR.mkdir(exist_ok=True)
 CHARTS_DIR.mkdir(exist_ok=True)
+FONT_DIR.mkdir(exist_ok=True)
+
+# Configure matplotlib for Unicode support
+plt.rcParams['font.family'] = 'DejaVu Sans'
+
+
+def format_arabic_text(text):
+    """Format Arabic text for proper RTL display."""
+    try:
+        reshaped = arabic_reshaper.reshape(str(text))
+        return get_display(reshaped)
+    except Exception:
+        return str(text)
+
+
+if ARABIC_FONT_PATH.exists():
+    pdfmetrics.registerFont(TTFont('Arabic', str(ARABIC_FONT_PATH)))
 
 
 def load_data(file_path):
-    """Load survey data from CSV or Excel file."""
     path = Path(file_path)
 
     if not path.exists():
@@ -34,26 +56,28 @@ def load_data(file_path):
 def generate_summary(df):
     summary = []
 
-    summary.append('Survey Analysis Report')
-    summary.append('=' * 24)
-    summary.append(f'Total Responses: {len(df)}')
-    summary.append(f'Total Questions/Columns: {len(df.columns)}')
+    summary.append('Survey Analysis Report / تقرير تحليل الاستبيان')
+    summary.append('=' * 50)
+    summary.append(f'Total Responses / إجمالي الردود: {len(df)}')
+    summary.append(f'Total Columns / عدد الأعمدة: {len(df.columns)}')
     summary.append('')
 
     for column in df.columns:
-        summary.append(f'--- {column.upper()} ---')
+        formatted_column = format_arabic_text(column)
+        summary.append(f'--- {formatted_column} ---')
 
         if pd.api.types.is_numeric_dtype(df[column]):
-            summary.append(f'Average: {df[column].mean():.2f}')
-            summary.append(f'Minimum: {df[column].min()}')
-            summary.append(f'Maximum: {df[column].max()}')
+            summary.append(f'Average / المتوسط: {df[column].mean():.2f}')
+            summary.append(f'Minimum / الحد الأدنى: {df[column].min()}')
+            summary.append(f'Maximum / الحد الأعلى: {df[column].max()}')
             summary.append('')
 
         counts = df[column].value_counts(dropna=False)
 
         for value, count in counts.items():
+            formatted_value = format_arabic_text(value)
             percentage = (count / len(df)) * 100
-            summary.append(f'{value}: {count} ({percentage:.1f}%)')
+            summary.append(f'{formatted_value}: {count} ({percentage:.1f}%)')
 
         summary.append('')
 
@@ -73,6 +97,10 @@ def save_pdf_report(content):
     pdf_path = REPORTS_DIR / 'survey_summary.pdf'
     document = SimpleDocTemplate(str(pdf_path), pagesize=A4)
     styles = getSampleStyleSheet()
+
+    if ARABIC_FONT_PATH.exists():
+        styles['Normal'].fontName = 'Arabic'
+
     story = []
 
     for line in content.split('\n'):
@@ -94,15 +122,17 @@ def generate_charts(df):
             if counts.empty:
                 continue
 
+            labels = [format_arabic_text(label) for label in counts.index]
+
             plt.figure(figsize=(8, 5))
-            counts.plot(kind='bar')
-            plt.title(f'{column} Distribution')
-            plt.xlabel(column)
+            plt.bar(labels, counts.values)
+            plt.title(format_arabic_text(f'{column} Distribution'))
+            plt.xlabel(format_arabic_text(column))
             plt.ylabel('Count')
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
 
-            safe_column_name = ''.join(char if char.isalnum() else '_' for char in column)
+            safe_column_name = ''.join(char if char.isalnum() else '_' for char in str(column))
             chart_path = CHARTS_DIR / f'{safe_column_name}.png'
             plt.savefig(chart_path)
             plt.close()
@@ -111,7 +141,7 @@ def generate_charts(df):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Analyze survey data from CSV or Excel files.')
+    parser = argparse.ArgumentParser(description='Analyze survey data from CSV or Excel files with Arabic support.')
     parser.add_argument(
         '--file',
         default=DEFAULT_DATA_FILE,
