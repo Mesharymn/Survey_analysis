@@ -1,4 +1,6 @@
 import argparse
+import re
+from collections import Counter
 from pathlib import Path
 
 import arabic_reshaper
@@ -21,12 +23,33 @@ REPORTS_DIR.mkdir(exist_ok=True)
 CHARTS_DIR.mkdir(exist_ok=True)
 FONT_DIR.mkdir(exist_ok=True)
 
-# Configure matplotlib for Unicode support
 plt.rcParams['font.family'] = 'DejaVu Sans'
+
+POSITIVE_WORDS = {
+    'good', 'great', 'excellent', 'amazing', 'fast', 'easy', 'helpful', 'clear',
+    'satisfied', 'happy', 'love', 'best', 'useful', 'professional', 'smooth',
+    'جيد', 'جيدة', 'ممتاز', 'ممتازة', 'رائع', 'رائعة', 'سريع', 'سريعة',
+    'سهل', 'سهلة', 'مفيد', 'مفيدة', 'واضح', 'واضحة', 'راضي', 'راضية',
+    'سعيد', 'سعيدة', 'احترافي', 'احترافية', 'جميل', 'جميلة', 'أفضل'
+}
+
+NEGATIVE_WORDS = {
+    'bad', 'poor', 'slow', 'difficult', 'hard', 'confusing', 'expensive', 'late',
+    'problem', 'issue', 'weak', 'angry', 'unhappy', 'worst', 'unclear',
+    'سيء', 'سيئة', 'ضعيف', 'ضعيفة', 'بطيء', 'بطيئة', 'صعب', 'صعبة',
+    'مشكلة', 'مشاكل', 'غالي', 'غالية', 'متأخر', 'متأخرة', 'غير واضح',
+    'معقد', 'معقدة', 'أسوأ', 'زعلان', 'زعلانة'
+}
+
+STOP_WORDS = {
+    'the', 'and', 'for', 'with', 'this', 'that', 'was', 'were', 'very', 'from',
+    'have', 'has', 'had', 'not', 'you', 'your', 'our', 'their', 'they', 'are',
+    'في', 'من', 'على', 'الى', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'كانت',
+    'كان', 'انه', 'أن', 'إن', 'او', 'أو', 'لكن', 'جدا', 'كل', 'ما', 'لا', 'نعم'
+}
 
 
 def format_arabic_text(text):
-    """Format Arabic text for proper RTL display."""
     try:
         reshaped = arabic_reshaper.reshape(str(text))
         return get_display(reshaped)
@@ -51,6 +74,100 @@ def load_data(file_path):
         return pd.read_excel(path)
 
     raise ValueError('Unsupported file type. Please use CSV, XLSX, or XLS files.')
+
+
+def tokenize_text(text):
+    words = re.findall(r'[\w\u0600-\u06FF]+', str(text).lower())
+    return [word for word in words if word not in STOP_WORDS and len(word) > 2]
+
+
+def detect_sentiment(text):
+    words = tokenize_text(text)
+    positive_score = sum(1 for word in words if word in POSITIVE_WORDS)
+    negative_score = sum(1 for word in words if word in NEGATIVE_WORDS)
+
+    if positive_score > negative_score:
+        return 'Positive / إيجابي'
+    if negative_score > positive_score:
+        return 'Negative / سلبي'
+    return 'Neutral / محايد'
+
+
+def is_open_text_column(series):
+    if not pd.api.types.is_object_dtype(series):
+        return False
+
+    text_values = series.dropna().astype(str)
+
+    if text_values.empty:
+        return False
+
+    average_words = text_values.apply(lambda value: len(str(value).split())).mean()
+    unique_ratio = text_values.nunique() / len(text_values)
+
+    return average_words >= 3 or unique_ratio > 0.6
+
+
+def analyze_sentiment_and_context(df):
+    results = []
+    sentiment_rows = []
+
+    results.append('Sentiment & Context Analysis / تحليل المشاعر والسياق')
+    results.append('=' * 60)
+
+    open_text_columns = [column for column in df.columns if is_open_text_column(df[column])]
+
+    if not open_text_columns:
+        results.append('No open-text response columns detected / لم يتم اكتشاف أعمدة نصية مفتوحة')
+        results.append('')
+        return '\n'.join(results), pd.DataFrame()
+
+    for column in open_text_columns:
+        values = df[column].dropna().astype(str)
+        sentiments = values.apply(detect_sentiment)
+        sentiment_counts = sentiments.value_counts()
+
+        results.append(f'--- {format_arabic_text(column)} ---')
+        results.append(f'Text Responses Analyzed / الردود النصية المحللة: {len(values)}')
+
+        for sentiment, count in sentiment_counts.items():
+            percentage = (count / len(values)) * 100
+            results.append(f'{format_arabic_text(sentiment)}: {count} ({percentage:.1f}%)')
+
+        all_words = []
+        for value in values:
+            all_words.extend(tokenize_text(value))
+
+        common_words = Counter(all_words).most_common(10)
+
+        if common_words:
+            results.append('Top Context Keywords / أهم الكلمات المتكررة:')
+            for word, count in common_words:
+                results.append(f'- {format_arabic_text(word)}: {count}')
+
+        positive_examples = values[sentiments == 'Positive / إيجابي'].head(2).tolist()
+        negative_examples = values[sentiments == 'Negative / سلبي'].head(2).tolist()
+
+        if positive_examples:
+            results.append('Positive Examples / أمثلة إيجابية:')
+            for example in positive_examples:
+                results.append(f'- {format_arabic_text(example)}')
+
+        if negative_examples:
+            results.append('Negative Examples / أمثلة سلبية:')
+            for example in negative_examples:
+                results.append(f'- {format_arabic_text(example)}')
+
+        results.append('')
+
+        for value, sentiment in zip(values, sentiments):
+            sentiment_rows.append({
+                'column': column,
+                'response': value,
+                'sentiment': sentiment,
+            })
+
+    return '\n'.join(results), pd.DataFrame(sentiment_rows)
 
 
 def generate_summary(df):
@@ -81,7 +198,20 @@ def generate_summary(df):
 
         summary.append('')
 
+    sentiment_summary, sentiment_df = analyze_sentiment_and_context(df)
+    summary.append(sentiment_summary)
+    save_sentiment_details(sentiment_df)
+
     return '\n'.join(summary)
+
+
+def save_sentiment_details(sentiment_df):
+    if sentiment_df.empty:
+        return
+
+    output_path = REPORTS_DIR / 'sentiment_details.csv'
+    sentiment_df.to_csv(output_path, index=False, encoding='utf-8-sig')
+    print(f'Sentiment details saved to: {output_path}')
 
 
 def save_text_report(content):
@@ -140,6 +270,31 @@ def generate_charts(df):
             print(f'Chart saved: {chart_path}')
 
 
+def generate_sentiment_charts(sentiment_df):
+    if sentiment_df.empty:
+        return
+
+    for column in sentiment_df['column'].unique():
+        column_data = sentiment_df[sentiment_df['column'] == column]
+        counts = column_data['sentiment'].value_counts()
+        labels = [format_arabic_text(label) for label in counts.index]
+
+        plt.figure(figsize=(8, 5))
+        plt.bar(labels, counts.values)
+        plt.title(format_arabic_text(f'Sentiment for {column}'))
+        plt.xlabel('Sentiment')
+        plt.ylabel('Count')
+        plt.xticks(rotation=30, ha='right')
+        plt.tight_layout()
+
+        safe_column_name = ''.join(char if char.isalnum() else '_' for char in str(column))
+        chart_path = CHARTS_DIR / f'sentiment_{safe_column_name}.png'
+        plt.savefig(chart_path)
+        plt.close()
+
+        print(f'Sentiment chart saved: {chart_path}')
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Analyze survey data from CSV or Excel files with Arabic support.')
     parser.add_argument(
@@ -166,6 +321,9 @@ def main():
 
     print('Generating charts...')
     generate_charts(df)
+
+    sentiment_summary, sentiment_df = analyze_sentiment_and_context(df)
+    generate_sentiment_charts(sentiment_df)
 
     print('Analysis complete.')
 
